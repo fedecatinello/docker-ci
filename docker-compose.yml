@@ -1,0 +1,99 @@
+version: '3'
+
+volumes:
+  jenkins-data:
+    driver: "local"
+  nexus-data:
+    driver: "local"  
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
+
+services:
+  nginx-1:
+    image: nginx:1.13.3-alpine
+    restart: always
+    networks:
+      - default
+      - external
+    volumes:
+      - ./nginx/nginx_jenkins.conf:/etc/nginx/nginx.conf:ro 
+    links:
+      - jenkins-1
+      - jenkins-2
+      - jenkins-3
+
+  # nginx-2:
+  #   image: nginx:1.13.3-alpine
+  #   restart: always
+  #   networks:
+  #     - default
+  #     - internal
+  #   volumes:
+  #     - ./nginx/nginx_nexus.conf:/etc/nginx/nginx.conf:ro 
+  #   links:
+  #     - nexus-1
+  #     - nexus-2    
+
+  jenkins-1:
+    image: jenkins/jenkins:lts
+    restart: always
+    networks:
+      - external
+      - internal
+    links:
+      - nexus-1
+      - nexus-2  
+    volumes:
+      - "jenkins-data:/var/jenkins_home"
+    ports:
+      - 8080:8080
+
+  jenkins-2:
+    image: jenkins/jenkins:lts
+    restart: always
+    networks:
+      - external
+      - internal
+    links:
+      - nexus-1
+      - nexus-2  
+    volumes:
+      - "jenkins-data:/var/jenkins_home"
+    ports:
+      - 8081:8080
+
+  jenkins-3:
+    image: jenkins/jenkins:lts
+    restart: always
+    networks:
+      - external
+      - internal
+    links:
+      - nexus-1
+      - nexus-2  
+    volumes:
+      - "jenkins-data:/var/jenkins_home"
+    ports:
+      - 8082:8080
+
+  nexus-1:
+    image: sonatype/nexus3
+    volumes:
+      - nexus-data:/nexus-data
+    networks:
+      - internal
+    ports:
+      - 9000:8081
+
+  nexus-2:
+    image: sonatype/nexus3
+    volumes:
+      - nexus-data:/nexus-data
+    networks:
+      - internal
+    ports:
+      - 9001:8081    
